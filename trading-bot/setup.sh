@@ -5,9 +5,12 @@
 set -e
 cd "$(dirname "$0")"
 
-echo "=== Installing system pip ==="
-sudo apt-get update -q
-sudo apt-get install -y python3-pip python3-venv
+# Install pip only if missing (requires sudo — run manually if this fails)
+if ! python3 -m pip --version &>/dev/null; then
+  echo "=== Installing system pip (requires sudo) ==="
+  sudo apt-get update -q
+  sudo apt-get install -y python3-pip python3-venv
+fi
 
 echo "=== Creating virtual environment ==="
 python3 -m venv .venv

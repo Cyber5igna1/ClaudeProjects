@@ -34,8 +34,8 @@ def generate_signals(df: pd.DataFrame, params: dict = PARAMS) -> tuple[pd.Series
     macd_sig  = macd_df[f"MACDs_{p['macd_fast']}_{p['macd_slow']}_{p['macd_signal']}"]
 
     bb_df = ta.bbands(close, length=p["bb_period"], std=p["bb_std"])
-    bb_lower = bb_df[f"BBL_{p['bb_period']}_{p['bb_std']}"]
-    bb_upper = bb_df[f"BBU_{p['bb_period']}_{p['bb_std']}"]
+    bb_lower = bb_df[[c for c in bb_df.columns if c.startswith("BBL_")][0]]
+    bb_upper = bb_df[[c for c in bb_df.columns if c.startswith("BBU_")][0]]
 
     # Crossover: current bar macd > signal, previous bar macd <= signal
     macd_cross_up   = (macd_line > macd_sig) & (macd_line.shift(1) <= macd_sig.shift(1))
