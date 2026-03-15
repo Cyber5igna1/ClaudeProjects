@@ -59,13 +59,23 @@ def init_cache_db():
 
 # ── Exchange factory ───────────────────────────────────────────────────────────
 
+_PLACEHOLDER_KEYS = {None, "", "your_binance_api_key", "your_binance_api_secret"}
+
+
 def _build_exchange() -> ccxt.Exchange:
     exchange_class = getattr(ccxt, EXCHANGE)
+    has_keys = API_KEY not in _PLACEHOLDER_KEYS and API_SECRET not in _PLACEHOLDER_KEYS
     params = {
-        "apiKey": API_KEY,
-        "secret": API_SECRET,
         "enableRateLimit": True,
+        "options": {
+            "fetchCurrencies": False,
+            "defaultType": "spot",
+            "fetchMarkets": {"types": ["spot"]},  # skip margin/futures private endpoints
+        },
     }
+    if has_keys:
+        params["apiKey"] = API_KEY
+        params["secret"] = API_SECRET
     if USE_TESTNET and EXCHANGE == "binance":
         params["urls"] = {"api": {"public": BINANCE_TESTNET_URL, "private": BINANCE_TESTNET_URL}}
     return exchange_class(params)
