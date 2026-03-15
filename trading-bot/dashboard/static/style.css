@@ -1,0 +1,91 @@
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0f1117;
+  --surface:  #1a1d27;
+  --border:   #2a2d3e;
+  --text:     #e2e8f0;
+  --muted:    #718096;
+  --green:    #68d391;
+  --red:      #fc8181;
+  --blue:     #63b3ed;
+  --yellow:   #f6e05e;
+  --radius:   8px;
+  --font:     "Segoe UI", system-ui, sans-serif;
+}
+
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; }
+
+/* ── Navbar ── */
+.navbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 52px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand { font-weight: 700; font-size: 16px; color: var(--blue); }
+.nav-links  { display: flex; gap: 24px; }
+.nav-links a { color: var(--muted); text-decoration: none; font-weight: 500; transition: color .2s; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); }
+
+/* ── Layout ── */
+.container { max-width: 1280px; margin: 0 auto; padding: 32px 24px; }
+.page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.subtitle   { color: var(--muted); margin-bottom: 24px; }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+}
+.card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+.card.empty { text-align: center; padding: 48px; color: var(--muted); }
+.empty-text { color: var(--muted); padding: 16px 0; }
+
+/* ── Two-column grid ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ── Stats grid ── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card  { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 8px; }
+.stat-value { font-size: 22px; font-weight: 700; }
+
+/* ── Status bar ── */
+.status-bar { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 24px; }
+.status-item { display: flex; flex-direction: column; }
+.status-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.status-value { font-size: 18px; font-weight: 700; }
+.status-value.paper { color: var(--yellow); }
+.status-value.live  { color: var(--red); }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+tr.highlight td { background: rgba(99,179,237,.06); }
+tr:hover td { background: rgba(255,255,255,.02); }
+
+/* ── Colours ── */
+.green   { color: var(--green); }
+.red     { color: var(--red); }
+.muted   { color: var(--muted); }
+.highlight { color: var(--blue); }
+
+/* ── Badges & buttons ── */
+.badge  { background: var(--border); color: var(--muted); font-size: 11px; border-radius: 99px; padding: 2px 8px; margin-left: 8px; }
+.btn-sm { background: var(--border); color: var(--text); text-decoration: none; padding: 3px 10px; border-radius: 4px; font-size: 12px; }
+.btn-sm:hover { background: var(--blue); color: var(--bg); }
+
+/* ── Charts ── */
+.chart-wrap { position: relative; height: 320px; }
+
+/* ── Footer ── */
+.footer { text-align: center; padding: 24px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 32px; }
+
+/* ── Code ── */
+code { background: var(--border); padding: 1px 6px; border-radius: 3px; font-size: 12px; font-family: monospace; }

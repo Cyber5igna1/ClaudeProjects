@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Strategy Comparison{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Strategy Comparison</h1>
+<p class="subtitle">Ranked by Sharpe Ratio — active strategy: <strong>{{ active_strategy }}</strong></p>
+
+{% if strategies %}
+<!-- Bar chart -->
+<div class="card">
+  <h2>Sharpe Ratio vs Max Drawdown</h2>
+  <div class="chart-wrap">
+    <canvas id="comparisonChart"></canvas>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <h2>All Results</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Strategy</th>
+          <th>Symbol</th>
+          <th>Return %</th>
+          <th>Sharpe</th>
+          <th>Max DD %</th>
+          <th>Win Rate %</th>
+          <th>Trades</th>
+          <th>Run Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i, s in strategies | enumerate %}
+        <tr {% if s.strategy_name == active_strategy %}class="highlight"{% endif %}>
+          <td>{{ i + 1 }}</td>
+          <td><strong>{{ s.strategy_name }}</strong></td>
+          <td>{{ s.symbol }}</td>
+          <td class="{% if s.total_return_pct >= 0 %}green{% else %}red{% endif %}">
+            {{ "+%.2f" | format(s.total_return_pct) if s.total_return_pct >= 0 else "%.2f" | format(s.total_return_pct) }}%
+          </td>
+          <td>{{ "%.3f" | format(s.sharpe_ratio) }}</td>
+          <td class="red">{{ "%.2f" | format(s.max_drawdown_pct) }}%</td>
+          <td>{{ "%.1f" | format(s.win_rate_pct) }}%</td>
+          <td>{{ s.total_trades }}</td>
+          <td class="muted">{{ s.run_date }}</td>
+          <td><a class="btn-sm" href="/detail/{{ s.strategy_name }}?symbol={{ s.symbol }}">Detail</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card empty">
+  <p>No backtest results yet. Run <code>python research/backtest_runner.py</code> to populate.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const data = {{ strategies | tojson }};
+const labels = data.map(s => s.strategy_name + "\n" + s.symbol);
+
+new Chart(document.getElementById("comparisonChart"), {
+  type: "bar",
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        label: "Sharpe Ratio",
+        data: data.map(s => s.sharpe_ratio),
+        backgroundColor: "rgba(99, 179, 237, 0.8)",
+        yAxisID: "y",
+      },
+      {
+        label: "Max Drawdown %",
+        data: data.map(s => -s.max_drawdown_pct),
+        backgroundColor: "rgba(252, 129, 129, 0.8)",
+        yAxisID: "y2",
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: "top" } },
+    scales: {
+      y:  { title: { display: true, text: "Sharpe Ratio" }, position: "left" },
+      y2: { title: { display: true, text: "Drawdown %" },   position: "right", grid: { drawOnChartArea: false } },
+    },
+  },
+});
+</script>
+{% endblock %}

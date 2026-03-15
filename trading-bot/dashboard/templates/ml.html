@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}ML Insights{% endblock %}
+
+{% block content %}
+<h1 class="page-title">ML Insights</h1>
+
+<!-- Model performance -->
+{% if ml_results %}
+<div class="card">
+  <h2>ML Strategy Backtest Results</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Strategy</th><th>Symbol</th><th>Return %</th>
+          <th>Sharpe</th><th>Max DD %</th><th>Win Rate %</th><th>Trades</th><th>Run Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in ml_results %}
+        <tr>
+          <td><strong>{{ r.strategy_name }}</strong></td>
+          <td>{{ r.symbol }}</td>
+          <td class="{% if r.total_return_pct >= 0 %}green{% else %}red{% endif %}">
+            {{ "+%.2f"|format(r.total_return_pct) if r.total_return_pct >= 0 else "%.2f"|format(r.total_return_pct) }}%
+          </td>
+          <td>{{ "%.3f"|format(r.sharpe_ratio) }}</td>
+          <td class="red">{{ "%.2f"|format(r.max_drawdown_pct) }}%</td>
+          <td>{{ "%.1f"|format(r.win_rate_pct) }}%</td>
+          <td>{{ r.total_trades }}</td>
+          <td class="muted">{{ r.run_date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Feature importance charts -->
+<div class="two-col">
+  <div class="card">
+    <h2>Random Forest — Feature Importance</h2>
+    {% if rf_importance %}
+    <div class="chart-wrap">
+      <canvas id="rfChart"></canvas>
+    </div>
+    {% else %}
+    <p class="empty-text">No data yet. Run <code>python research/ml_trainer.py</code></p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>XGBoost — Feature Importance</h2>
+    {% if xgb_importance %}
+    <div class="chart-wrap">
+      <canvas id="xgbChart"></canvas>
+    </div>
+    {% else %}
+    <p class="empty-text">No data yet. Run <code>python research/ml_trainer.py</code></p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function makeImportanceChart(canvasId, rows, color) {
+  if (!rows || !rows.length) return;
+  new Chart(document.getElementById(canvasId), {
+    type: "bar",
+    data: {
+      labels: rows.map(r => r.feature_name),
+      datasets: [{
+        label: "Importance",
+        data: rows.map(r => r.importance),
+        backgroundColor: color,
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { x: { title: { display: true, text: "Importance" } } },
+    },
+  });
+}
+
+makeImportanceChart("rfChart",  {{ rf_importance  | tojson }}, "rgba(99,179,237,0.8)");
+makeImportanceChart("xgbChart", {{ xgb_importance | tojson }}, "rgba(154,205,50,0.8)");
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}{{ strategy_name }} — Detail{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ strategy_name }} <span class="muted">/ {{ symbol }}</span></h1>
+
+<!-- Stats cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Return</div>
+    <div class="stat-value {% if strategy.total_return_pct >= 0 %}green{% else %}red{% endif %}">
+      {{ "+%.2f" | format(strategy.total_return_pct) if strategy.total_return_pct >= 0 else "%.2f" | format(strategy.total_return_pct) }}%
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Sharpe Ratio</div>
+    <div class="stat-value">{{ "%.3f" | format(strategy.sharpe_ratio) }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Max Drawdown</div>
+    <div class="stat-value red">{{ "%.2f" | format(strategy.max_drawdown_pct) }}%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Win Rate</div>
+    <div class="stat-value">{{ "%.1f" | format(strategy.win_rate_pct) }}%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Trades</div>
+    <div class="stat-value">{{ strategy.total_trades }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Avg Duration</div>
+    <div class="stat-value">{{ "%.1f" | format(strategy.avg_trade_duration_h) }}h</div>
+  </div>
+</div>
+
+<!-- Cumulative P&L chart -->
+{% if trades %}
+<div class="card">
+  <h2>Cumulative P&L</h2>
+  <div class="chart-wrap">
+    <canvas id="pnlChart"></canvas>
+  </div>
+</div>
+
+<!-- Trade log -->
+<div class="card">
+  <h2>Trade Log <span class="badge">{{ trades | length }} trades</span></h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Side</th>
+          <th>Entry Time</th>
+          <th>Exit Time</th>
+          <th>Entry Price</th>
+          <th>Exit Price</th>
+          <th>Qty</th>
+          <th>P&amp;L (USD)</th>
+          <th>Mode</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in trades %}
+        <tr>
+          <td class="{% if t.side == 'buy' %}green{% else %}red{% endif %}">{{ t.side | upper }}</td>
+          <td class="muted">{{ t.entry_time }}</td>
+          <td class="muted">{{ t.exit_time or "—" }}</td>
+          <td>{{ "%.2f" | format(t.entry_price) }}</td>
+          <td>{{ "%.2f" | format(t.exit_price) if t.exit_price else "—" }}</td>
+          <td>{{ "%.6f" | format(t.quantity) if t.quantity else "—" }}</td>
+          <td class="{% if (t.pnl_usd or 0) >= 0 %}green{% else %}red{% endif %}">
+            {{ "+%.4f" | format(t.pnl_usd) if (t.pnl_usd or 0) >= 0 else "%.4f" | format(t.pnl_usd) }}
+          </td>
+          <td class="muted">{{ "Paper" if t.paper_trade else "Live" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card empty">
+  <p>No live trades recorded yet for this strategy.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const trades = {{ trades | tojson }};
+if (trades.length) {
+  let cumPnl = 0;
+  const points = trades.map(t => {
+    cumPnl += (t.pnl_usd || 0);
+    return { x: t.exit_time || t.entry_time, y: parseFloat(cumPnl.toFixed(4)) };
+  });
+
+  new Chart(document.getElementById("pnlChart"), {
+    type: "line",
+    data: {
+      datasets: [{
+        label: "Cumulative P&L (USD)",
+        data: points,
+        borderColor: "rgba(99,179,237,1)",
+        backgroundColor: "rgba(99,179,237,0.1)",
+        fill: true,
+        tension: 0.2,
+        pointRadius: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      parsing: false,
+      scales: {
+        x: { type: "category", title: { display: true, text: "Time" } },
+        y: { title: { display: true, text: "P&L (USD)" } },
+      },
+    },
+  });
+}
+</script>
+{% endblock %}

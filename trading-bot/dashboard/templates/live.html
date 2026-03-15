@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Live Monitor{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Live Monitor</h1>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <div class="status-item">
+    <span class="status-label">Active Strategy</span>
+    <span class="status-value highlight">{{ active_strategy }}</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">Symbol</span>
+    <span class="status-value">{{ symbol }}</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">Mode</span>
+    <span class="status-value {% if paper_trade %}paper{% else %}live{% endif %}">
+      {{ "PAPER" if paper_trade else "LIVE" }}
+    </span>
+  </div>
+</div>
+
+<!-- Open position -->
+<div class="card">
+  <h2>Open Position</h2>
+  {% if open_position %}
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Side</div>
+      <div class="stat-value {{ 'green' if open_position.side == 'buy' else 'red' }}">
+        {{ open_position.side | upper }}
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Entry Price</div>
+      <div class="stat-value">${{ "%.2f" | format(open_position.entry_price) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Quantity</div>
+      <div class="stat-value">{{ "%.6f" | format(open_position.quantity) if open_position.quantity else "—" }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Entry Time</div>
+      <div class="stat-value muted">{{ open_position.entry_time }}</div>
+    </div>
+  </div>
+  {% else %}
+  <p class="empty-text">No open position.</p>
+  {% endif %}
+</div>
+
+<!-- Balance / P&L chart -->
+<div class="card">
+  <h2>Cumulative P&L Over Time</h2>
+  {% if balance_history %}
+  <div class="chart-wrap">
+    <canvas id="balanceChart"></canvas>
+  </div>
+  {% else %}
+  <p class="empty-text">No trade history yet.</p>
+  {% endif %}
+</div>
+
+<!-- Recent trades -->
+<div class="card">
+  <h2>Recent Trades <span class="badge">last 50</span></h2>
+  {% if recent_trades %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Strategy</th><th>Symbol</th><th>Side</th>
+          <th>Entry</th><th>Exit</th><th>P&amp;L (USD)</th>
+          <th>Entry Time</th><th>Mode</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in recent_trades %}
+        <tr>
+          <td>{{ t.strategy_name }}</td>
+          <td>{{ t.symbol }}</td>
+          <td class="{% if t.side == 'buy' %}green{% else %}red{% endif %}">{{ t.side | upper }}</td>
+          <td>{{ "%.2f"|format(t.entry_price) if t.entry_price else "—" }}</td>
+          <td>{{ "%.2f"|format(t.exit_price)  if t.exit_price  else "—" }}</td>
+          <td class="{% if (t.pnl_usd or 0) >= 0 %}green{% else %}red{% endif %}">
+            {{ "+%.4f"|format(t.pnl_usd) if (t.pnl_usd or 0) >= 0 else "%.4f"|format(t.pnl_usd) }}
+          </td>
+          <td class="muted">{{ t.entry_time }}</td>
+          <td class="muted">{{ "Paper" if t.paper_trade else "Live" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-text">No trades recorded yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const history = {{ balance_history | tojson }};
+if (history.length) {
+  new Chart(document.getElementById("balanceChart"), {
+    type: "line",
+    data: {
+      labels: history.map(r => r.ts),
+      datasets: [{
+        label: "Cumulative P&L (USD)",
+        data: history.map(r => r.cumulative_pnl),
+        borderColor: "rgba(99,179,237,1)",
+        backgroundColor: "rgba(99,179,237,0.1)",
+        fill: true,
+        tension: 0.2,
+        pointRadius: 1,
+      }],
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { maxTicksLimit: 12 }, title: { display: true, text: "Time" } },
+        y: { title: { display: true, text: "P&L (USD)" } },
+      },
+    },
+  });
+}
+</script>
+{% endblock %}
